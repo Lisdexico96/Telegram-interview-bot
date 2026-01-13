@@ -1,0 +1,74 @@
+# Environment variables and secrets
+.env
+*.env
+.env.local
+.env.*.local
+# But keep the example file
+!.env.example
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+interview.db
+
+# Logs
+*.log
+bot.log
+*.log.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+desktop.ini
+
+# Bot specific
+bot_output.txt
+error.txt
+last_clear_date.txt
+*.bat
+*.sh
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Railway
+.railway/

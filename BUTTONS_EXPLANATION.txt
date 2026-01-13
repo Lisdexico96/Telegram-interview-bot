@@ -1,0 +1,215 @@
+===============================================================================
+                    SCRIPT LAUNCHER - BUTTON EXPLANATIONS
+===============================================================================
+
+This document explains what each button in the Script Launcher does and when
+to use them.
+
+===============================================================================
+1. RECREATE DATABASE
+===============================================================================
+
+WHAT IT DOES:
+    - Completely deletes the existing database file (interview.db)
+    - Creates a brand new database with the correct schema
+    - Rebuilds both the candidates and responses tables from scratch
+
+WHEN TO USE:
+    - When you need to start completely fresh
+    - When the database file is corrupted beyond repair
+    - When you want to ensure the database has the exact correct schema
+    - When setting up the bot for the first time
+
+WARNING:
+    ⚠️ This will PERMANENTLY DELETE all existing data!
+    ⚠️ You will lose all candidates, responses, and interview history
+    ⚠️ This action cannot be undone
+
+CONFIRMATION:
+    - The launcher will ask for confirmation before running this script
+    - Make sure you really want to delete everything before proceeding
+
+RESULT:
+    - A fresh, empty database with the correct structure
+    - Ready to start accepting new interviews
+
+===============================================================================
+2. RESET DATABASE
+===============================================================================
+
+WHAT IT DOES:
+    - Clears all data from the database (candidates and responses)
+    - Keeps the database file and structure intact
+    - Preserves the table schema and columns
+
+WHEN TO USE:
+    - During testing when you want to clear test data
+    - When you want to start fresh without recreating the database structure
+    - When resetting the bot between test sessions
+    - After completing a batch of interviews and starting a new batch
+
+WARNING:
+    ⚠️ This will DELETE all interview data
+    ⚠️ All candidates and their responses will be removed
+    ⚠️ This action cannot be undone
+
+CONFIRMATION:
+    - The launcher will ask for confirmation before running this script
+    - The script requires the --yes flag (handled automatically by the GUI)
+
+RESULT:
+    - An empty database with the same structure
+    - All tables remain but contain no data
+    - Ready for new interviews
+
+===============================================================================
+3. FIX DATABASE
+===============================================================================
+
+WHAT IT DOES:
+    - Adds any missing columns to the candidates table
+    - Updates the database schema to match the current requirements
+    - Clears all existing data from the database
+
+WHEN TO USE:
+    - When the database schema is outdated (after code updates)
+    - When you're getting errors about missing columns
+    - When the database structure needs to be updated
+    - After updating the bot code that requires new database fields
+
+WARNING:
+    ⚠️ This will CLEAR all data from the database
+    ⚠️ All candidates and responses will be deleted
+    ⚠️ This action cannot be undone
+
+CONFIRMATION:
+    - The launcher will ask for confirmation before running this script
+
+RESULT:
+    - Database schema updated with all required columns
+    - An empty database with the correct, up-to-date structure
+    - Ready for new interviews with the latest schema
+
+SCHEMA CHANGES:
+    The script checks for and adds these columns if missing:
+    - name (TEXT)
+    - completed (INTEGER)
+    - decision (TEXT)
+    - feedback (TEXT)
+    - has_completed_interview (INTEGER)
+
+===============================================================================
+4. CHECK DATABASE
+===============================================================================
+
+WHAT IT DOES:
+    - Displays information about the current database
+    - Shows database file location and size
+    - Lists all table columns and their types
+    - Counts candidates and responses
+    - Displays detailed information about all candidates
+
+WHEN TO USE:
+    - To verify database status and structure
+    - To see how many candidates are in the database
+    - To check the database schema
+    - To troubleshoot database-related issues
+    - Before making changes to understand current state
+
+WARNING:
+    ✅ This is a READ-ONLY operation
+    ✅ No data will be modified or deleted
+    ✅ Safe to run anytime
+
+CONFIRMATION:
+    - No confirmation needed - this is a safe operation
+
+RESULT:
+    - Detailed report displayed in the output window:
+      * Database file location and size
+      * Table structure (columns and types)
+      * Number of candidates
+      * Number of responses
+      * Detailed candidate information
+
+===============================================================================
+5. STOP BOT
+===============================================================================
+
+WHAT IT DOES:
+    - Finds all running bot processes (Python processes running bot.py)
+    - Stops (kills) those processes
+    - Used to shut down the Telegram bot cleanly
+
+WHEN TO USE:
+    - When the bot is running and you need to stop it
+    - Before running database scripts (to avoid conflicts)
+    - When the bot is frozen or not responding
+    - When you need to restart the bot
+
+WARNING:
+    ⚠️ This will forcefully stop the bot
+    ⚠️ Any in-progress interviews may be interrupted
+    ⚠️ Make sure to save any important data first
+
+CONFIRMATION:
+    - No confirmation needed - this is typically a safe operation
+
+RESULT:
+    - All bot processes are stopped
+    - The bot is no longer running
+    - You can now safely run database operations
+    - Ready to restart the bot if needed
+
+PLATFORM SUPPORT:
+    - Windows: Uses stop_bot.bat (batch file)
+    - Linux/Mac: Uses stop_bot.sh (shell script)
+    - The correct script is automatically selected based on your OS
+
+===============================================================================
+GENERAL INFORMATION
+===============================================================================
+
+OUTPUT WINDOW:
+    - All script output appears in the output window below the buttons
+    - You can scroll through the output to see all messages
+    - Use the "Clear Output" button to clear the output window
+    - Output shows in real-time as scripts execute
+
+BUTTON STATES:
+    - Buttons are disabled (grayed out) while a script is running
+    - Buttons re-enable automatically when the script finishes
+    - You can run only one script at a time
+
+ERROR HANDLING:
+    - If a script fails, an error message will be shown
+    - Check the output window for detailed error information
+    - Some scripts may show warnings or informational messages
+
+BEST PRACTICES:
+    1. Always stop the bot before running database scripts
+    2. Check the database status before making changes
+    3. Make backups if you have important data
+    4. Read warnings carefully before confirming destructive operations
+    5. Use "Check Database" to verify changes after operations
+
+TYPICAL WORKFLOW:
+    1. Stop Bot (if running)
+    2. Check Database (to see current state)
+    3. Run appropriate database script (Reset/Fix/Recreate)
+    4. Check Database again (to verify changes)
+    5. Restart Bot (if needed)
+
+===============================================================================
+QUICK REFERENCE
+===============================================================================
+
+RECREATE DATABASE    → Delete everything, create fresh database
+RESET DATABASE       → Clear data, keep structure
+FIX DATABASE         → Update schema, clear data
+CHECK DATABASE       → View database status (read-only)
+STOP BOT            → Stop running bot processes
+
+===============================================================================
+For more detailed information, see CODE_ORGANIZATION.md
+===============================================================================
