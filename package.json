@@ -1,0 +1,20 @@
+{
+  "name": "telegram-interview-bot",
+  "version": "1.0.0",
+  "description": "A sophisticated Telegram bot for conducting automated interviews with candidates. Features randomized question selection, AI-powered response scoring, and comprehensive result tracking.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "googleapis": "^171.4.0",
+    "openai": "^6.27.0",
+    "telegraf": "^4.16.3"
+  }
+}

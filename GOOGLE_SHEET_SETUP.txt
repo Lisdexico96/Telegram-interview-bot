@@ -1,0 +1,146 @@
+================================================================================
+HOW TO CONNECT YOUR GOOGLE SHEET TO THE BOT
+================================================================================
+
+When an applicant gets PASS from the AI, the bot asks them for:
+- Full name
+- Email
+- Phone
+
+Then it appends one row to your Google Sheet. Follow these steps to connect it.
+
+================================================================================
+STEP 1: CREATE A GOOGLE SHEET
+================================================================================
+
+1. Go to https://sheets.google.com and sign in.
+2. Create a new spreadsheet (or use an existing one).
+3. In the first row, add headers (optional but recommended):
+   A1: Full Name   B1: Email   C1: Phone   D1: Telegram Username   E1: Telegram User ID   F1: Application / Notes
+4. The bot will append new rows below the first row. You can rename the tab at the bottom (e.g. "Applicants"); if you do, you’ll set GOOGLE_SHEET_TAB_NAME in .env.
+
+================================================================================
+STEP 2: GET YOUR SPREADSHEET ID
+================================================================================
+
+1. Open your Google Sheet in the browser.
+2. Look at the URL. It looks like:
+   https://docs.google.com/spreadsheets/d/1ABC123xyz.../edit
+3. The long string between /d/ and /edit is your SPREADSHEET ID.
+   Example: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
+4. Copy it. You will set it as GOOGLE_SHEET_ID in .env.
+
+================================================================================
+STEP 3: CREATE A GOOGLE CLOUD PROJECT AND ENABLE SHEETS API
+================================================================================
+
+1. Go to https://console.cloud.google.com
+2. Create a new project (or select an existing one):
+   - Click the project dropdown at the top → "New Project" → name it (e.g. "Telegram Bot") → Create.
+3. Enable the Google Sheets API:
+   - In the left menu go to "APIs & Services" → "Library".
+   - Search for "Google Sheets API" → click it → "Enable".
+
+================================================================================
+STEP 4: CREATE A SERVICE ACCOUNT AND DOWNLOAD CREDENTIALS
+================================================================================
+
+1. In Google Cloud Console, go to "APIs & Services" → "Credentials".
+2. Click "Create Credentials" → "Service account".
+3. Give it a name (e.g. "telegram-bot-sheet") → "Create and Continue" → Skip optional steps → "Done".
+4. Click the service account you just created.
+5. Open the "Keys" tab → "Add Key" → "Create new key" → choose "JSON" → "Create".
+   A JSON file will download. Keep it safe; you’ll use its contents in .env.
+6. Copy the "Client email" shown for this service account (looks like xxx@project-id.iam.gserviceaccount.com). You’ll need it in the next step.
+
+================================================================================
+STEP 5: SHARE THE GOOGLE SHEET WITH THE SERVICE ACCOUNT
+================================================================================
+
+1. Open your Google Sheet again.
+2. Click "Share" (top right).
+3. Paste the service account email (from Step 4).
+4. Give it "Editor" access.
+5. Uncheck "Notify people" (optional).
+6. Click "Share" or "Send".
+
+Without this step, the bot will get "permission denied" when writing to the sheet.
+
+================================================================================
+STEP 6: ADD VARIABLES TO .env
+================================================================================
+
+1. Open the JSON file you downloaded in Step 4. It looks like:
+   {"type":"service_account","project_id":"...","private_key_id":"...","private_key":"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n","client_email":"...","client_id":"...", ...}
+
+2. You must put this entire JSON into .env as one line (no line breaks). Options:
+
+   Option A – Single line in .env (replace line breaks inside the key with \n):
+   GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"your-project","private_key_id":"...","private_key":"-----BEGIN PRIVATE KEY-----\\nYOUR_KEY\\n-----END PRIVATE KEY-----\\n","client_email":"...",...}
+
+   Option B – If your .env supports multi-line values, paste the whole JSON between quotes (check your hosting docs).
+
+   Option C – On Railway / Heroku: create a variable GOOGLE_SERVICE_ACCOUNT_JSON and paste the entire JSON string (one line, with \n for newlines inside the private_key string).
+
+3. Add the spreadsheet ID:
+   GOOGLE_SHEET_ID=1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
+
+4. Optional – if your tab name is not "Sheet1":
+   GOOGLE_SHEET_TAB_NAME=Applicants
+
+Example .env lines:
+
+GOOGLE_SHEET_ID=your_spreadsheet_id_here
+GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account",...paste full JSON as one line...}
+
+Save the file and restart the bot:
+
+  npm start
+
+================================================================================
+STEP 7: TEST THE FLOW
+================================================================================
+
+1. Send a message to your bot that will get a PASS from the AI.
+2. After the bot replies with "Decision: PASS" and feedback, it should send:
+   "You passed! To move forward, we need a few details..."
+3. Reply with your full name → then email → then phone.
+4. After the last reply, the bot should say: "Your information has been saved."
+5. Refresh your Google Sheet; you should see a new row with that applicant.
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+"Missing Google Sheet config"
+  → Check that GOOGLE_SHEET_ID and GOOGLE_SERVICE_ACCOUNT_JSON are both set in .env.
+
+"GOOGLE_SERVICE_ACCOUNT_JSON must be valid JSON"
+  → The value must be a single valid JSON object. Remove real line breaks; use \n inside the "private_key" string only. No trailing commas.
+
+403 or "Permission denied" / "The caller does not have permission"
+  → Share the Google Sheet with the service account email (Step 5) with "Editor" access.
+
+404 or "Unable to parse range"
+  → Check GOOGLE_SHEET_ID. If you use a different tab, set GOOGLE_SHEET_TAB_NAME to the exact tab name (e.g. Applicants).
+
+Bot says "We received your details but could not save them"
+  → Check the bot’s console/terminal for the exact error. Verify the sheet is shared with the service account and the API is enabled.
+
+================================================================================
+COLUMN ORDER IN THE SHEET
+================================================================================
+
+The bot appends one row with this order:
+  A: Full Name
+  B: Email
+  C: Phone
+  D: Telegram Username
+  E: Telegram User ID
+  F: Application / Notes
+
+You can leave row 1 as headers; the bot appends from the next row.
+
+================================================================================
+END OF GUIDE
+================================================================================
