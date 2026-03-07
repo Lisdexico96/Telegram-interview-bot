@@ -10,7 +10,7 @@ import logging
 import subprocess
 import signal
 from dotenv import load_dotenv
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 from telegram.error import NetworkError, TimedOut, TelegramError, Conflict
 
 from config import DB_FILE
@@ -44,7 +44,7 @@ if not ADMIN_CHAT_ID:
 ADMIN_IDS = [int(x) for x in ADMIN_CHAT_ID.split(",")]
 
 # Import handlers AFTER ADMIN_IDS is defined to avoid import issues
-from handlers import start_handler, handle_message, stop_command, error_handler
+from handlers import start_handler, handle_message, payment_callback_handler, stop_command, error_handler
 
 # Global application instance for graceful shutdown
 app_instance = None
@@ -161,6 +161,7 @@ def main() -> None:
         app_instance.add_handler(CommandHandler("start", start_handler))
         app_instance.add_handler(CommandHandler("stop", 
             lambda u, c: stop_command(u, c, ADMIN_IDS, stop_bot, kill_all_bot_processes)))
+        app_instance.add_handler(CallbackQueryHandler(payment_callback_handler))
         app_instance.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         app_instance.add_error_handler(error_handler)
         

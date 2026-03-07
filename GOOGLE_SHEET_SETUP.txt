@@ -16,7 +16,7 @@ STEP 1: CREATE A GOOGLE SHEET
 1. Go to https://sheets.google.com and sign in.
 2. Create a new spreadsheet (or use an existing one).
 3. In the first row, add headers (optional but recommended):
-   A1: Full Name   B1: Email   C1: Phone   D1: Telegram Username   E1: Telegram User ID   F1: Application / Notes
+   For Python bot (chatters): A1: Name  B1: Lastname  C1: Replies  D1: Status  E1: Payment method  F1: BTC address  G1: wise name  H1: Wise email  I1: currency
 4. The bot will append new rows below the first row. You can rename the tab at the bottom (e.g. "Applicants"); if you do, you’ll set GOOGLE_SHEET_TAB_NAME in .env.
 
 ================================================================================

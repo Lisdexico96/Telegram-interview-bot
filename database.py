@@ -55,7 +55,35 @@ def init_database():
         cur.execute("ALTER TABLE candidates ADD COLUMN selected_questions TEXT")
     except sqlite3.OperationalError:
         pass
-    
+    try:
+        cur.execute("ALTER TABLE candidates ADD COLUMN lastname TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cur.execute("ALTER TABLE candidates ADD COLUMN payment_phase INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cur.execute("ALTER TABLE candidates ADD COLUMN payment_method TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cur.execute("ALTER TABLE candidates ADD COLUMN btc_address TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cur.execute("ALTER TABLE candidates ADD COLUMN wise_name TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cur.execute("ALTER TABLE candidates ADD COLUMN wise_email TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cur.execute("ALTER TABLE candidates ADD COLUMN currency TEXT")
+    except sqlite3.OperationalError:
+        pass
+
     # Migrate existing completed=1 records to has_completed_interview=1
     cur.execute("UPDATE candidates SET has_completed_interview = 1 WHERE completed = 1")
     

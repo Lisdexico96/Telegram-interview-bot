@@ -5,7 +5,7 @@ Telegram bot handlers for interview process
 import time
 import logging
 import json
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from database import get_cursor, get_connection
@@ -14,6 +14,45 @@ from scoring import analyze_response, determine_decision
 from utils import generate_feedback, notify_admin
 
 logger = logging.getLogger(__name__)
+
+
+def _build_replies_text(cur, user_id: int) -> str:
+    """Build 'Q: ... A: ...' text from responses table for this user."""
+    cur.execute(
+        "SELECT question_number, question_text, response_text FROM responses WHERE user_id = ? ORDER BY question_number",
+        (user_id,),
+    )
+    rows = cur.fetchall()
+    parts = []
+    for qnum, qtext, rtext in rows:
+        parts.append(f"Q{qnum + 1}: {qtext or ''}\nA{qnum + 1}: {rtext or ''}")
+    return "\n\n".join(parts) if parts else ""
+
+
+def _append_chatter_to_airtable(cur, user_id: int, status: str, payment_method: str = "", btc_address: str = "",
+                                wise_name: str = "", wise_email: str = "", currency: str = "") -> None:
+    """Append one record to Airtable. Requires airtable module and env vars."""
+    cur.execute("SELECT name, lastname FROM candidates WHERE user_id = ?", (user_id,))
+    row = cur.fetchone()
+    name = (row[0] or "") if row else ""
+    lastname = (row[1] or "") if row else ""
+    replies = _build_replies_text(cur, user_id)
+    try:
+        from airtable import append_chatter
+        append_chatter({
+            "name": name,
+            "lastname": lastname,
+            "replies": replies,
+            "status": status,
+            "payment_method": payment_method,
+            "btc_address": btc_address,
+            "wise_name": wise_name,
+            "wise_email": wise_email,
+            "currency": currency,
+        })
+    except Exception as e:
+        logger.exception("Failed to append chatter to Airtable: %s", e)
+        raise
 
 
 def is_admin(user_id: int) -> bool:
@@ -111,12 +150,15 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user_questions = get_user_questions(cur, user.id)
             if user_questions:
                 total = len(user_questions)
-                if current_index >= 0 and current_index <= total:
-                    await update.message.reply_text(
-                        f"You already have an interview in progress.\n\n"
-                        f"You're on question {current_index if current_index > 0 else 1} of {total}.\n"
-                        f"Please continue by answering the current question."
-                    )
+                if current_index >= -2 and current_index <= total:
+                    if current_index == -2:
+                        await update.message.reply_text("Please send your last name to continue.")
+                    else:
+                        await update.message.reply_text(
+                            f"You already have an interview in progress.\n\n"
+                            f"You're on question {current_index if current_index > 0 else 1} of {total}.\n"
+                            f"Please continue by answering the current question."
+                        )
                     logger.info(f"User {user.id} tried to restart while interview in progress (question {current_index})")
                     return
         elif row and row[2] == 0 and is_admin_user:
@@ -147,15 +189,17 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cur.execute("""
         UPDATE candidates 
         SET username = ?, question_index = -1, last_time = ?, completed = 0, 
-            score = 0, ai_score = 0, decision = NULL, name = NULL, feedback = NULL, has_completed_interview = 0
+            score = 0, ai_score = 0, decision = NULL, name = NULL, lastname = NULL, feedback = NULL,
+            has_completed_interview = 0, payment_phase = 0, payment_method = NULL,
+            btc_address = NULL, wise_name = NULL, wise_email = NULL, currency = NULL
         WHERE user_id = ?
         """, (user.username, time.time(), user.id))
         
         if cur.rowcount == 0:
             cur.execute("""
             INSERT INTO candidates 
-            (user_id, username, question_index, last_time, completed, score, ai_score, decision, name, feedback, has_completed_interview)
-            VALUES (?, ?, -1, ?, 0, 0, 0, NULL, NULL, NULL, 0)
+            (user_id, username, question_index, last_time, completed, score, ai_score, decision, name, lastname, feedback, has_completed_interview)
+            VALUES (?, ?, -1, ?, 0, 0, 0, NULL, NULL, NULL, NULL, 0)
             """, (user.id, user.username, time.time()))
         
         conn.commit()
@@ -188,14 +232,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         logger.info(f"User {user.id} (@{user.username}) sent message: {text[:50]}...")
 
-        cur.execute("SELECT question_index, name, last_time, has_completed_interview FROM candidates WHERE user_id=?", (user.id,))
+        cur.execute("""
+            SELECT question_index, name, lastname, last_time, has_completed_interview,
+                   payment_phase, payment_method, wise_name, wise_email, currency
+            FROM candidates WHERE user_id = ?
+        """, (user.id,))
         row = cur.fetchone()
         
         if not row:
             await update.message.reply_text("Please start the bot first by sending /start")
             return
 
-        index, name, last_time, has_completed = row
+        (index, name, lastname, last_time, has_completed,
+         payment_phase, payment_method, wise_name, wise_email, currency) = row
 
         # Guard: Check completion lock (admins can bypass)
         is_admin_user = is_admin(user.id)
@@ -205,14 +254,23 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
         elif has_completed == 1 and is_admin_user:
-            # Admin can continue even after completion - reset the lock for them
             logger.info(f"Admin {user.id} continuing after completion - resetting lock")
             cur.execute("UPDATE candidates SET has_completed_interview = 0, completed = 0 WHERE user_id = ?", (user.id,))
             conn.commit()
 
+        # Payment collection (after passed interview)
+        if payment_phase == 2:
+            await _handle_payment_collect(update, text, user.id, cur, conn, payment_method, wise_name, wise_email, currency)
+            return
+        if payment_phase == 1:
+            await update.message.reply_text("Please choose your payment method using the buttons above.")
+            return
+
         # Route to state handler
         if index == -1:
             await _handle_name_input(update, text, user.id, cur, conn)
+        elif index == -2:
+            await _handle_lastname_input(update, text, user.id, cur, conn)
         elif index == 0:
             await _handle_welcome(update, user.id, cur, conn)
         elif index >= 1:
@@ -258,27 +316,23 @@ async def _handle_name_input(update: Update, text: str, user_id: int, cur, conn)
         cur.execute("UPDATE candidates SET has_completed_interview = 0, completed = 0 WHERE user_id = ?", (user_id,))
         conn.commit()
     
-    logger.info(f"User {user_id} provided name: {applicant_name}")
+    logger.info(f"User {user_id} provided first name: {applicant_name}")
     
-    # Randomly select 5 questions for this interview
+    # Randomly select 5 questions and store; ask for last name next (question_index = -2)
     selected_questions = get_random_questions()
     questions_json = json.dumps(selected_questions)
     
-    logger.info(f"Selected {len(selected_questions)} random questions for user {user_id}")
-    
-    # Store name, selected questions, and transition to welcome state
-    # For admins, remove the has_completed_interview restriction
     if is_admin_user:
         cur.execute("""
         UPDATE candidates
-        SET name = ?, question_index = 0, last_time = ?, score = 0, ai_score = 0, completed = 0, 
+        SET name = ?, question_index = -2, last_time = ?, score = 0, ai_score = 0, completed = 0,
             decision = NULL, feedback = NULL, has_completed_interview = 0, selected_questions = ?
         WHERE user_id = ?
         """, (applicant_name, time.time(), questions_json, user_id))
     else:
         cur.execute("""
         UPDATE candidates
-        SET name = ?, question_index = 0, last_time = ?, score = 0, ai_score = 0, completed = 0, 
+        SET name = ?, question_index = -2, last_time = ?, score = 0, ai_score = 0, completed = 0,
             decision = NULL, feedback = NULL, has_completed_interview = 0, selected_questions = ?
         WHERE user_id = ? AND has_completed_interview = 0
         """, (applicant_name, time.time(), questions_json, user_id))
@@ -288,8 +342,52 @@ async def _handle_name_input(update: Update, text: str, user_id: int, cur, conn)
         return
     
     conn.commit()
+    await update.message.reply_text("What is your last name?")
+    logger.info(f"User {user_id} first name stored, asked for last name")
+
+
+async def _handle_lastname_input(update: Update, text: str, user_id: int, cur, conn):
+    """Handle last name input; then send welcome and first question."""
+    lastname = text.strip()
     
-    # Send welcome message
+    if len(lastname) < 2:
+        await update.message.reply_text("Please provide a valid last name (at least 2 characters).")
+        return
+    if len(lastname) > 40:
+        await update.message.reply_text("Please provide just your last name.")
+        return
+    
+    is_admin_user = is_admin(user_id)
+    cur.execute("SELECT name, selected_questions FROM candidates WHERE user_id = ?", (user_id,))
+    row = cur.fetchone()
+    if not row:
+        await update.message.reply_text("Sorry, please start over with /start")
+        return
+    applicant_name, questions_json = row
+    selected_questions = json.loads(questions_json) if questions_json else get_random_questions()
+    if not questions_json:
+        questions_json = json.dumps(selected_questions)
+        cur.execute("UPDATE candidates SET selected_questions = ? WHERE user_id = ?", (questions_json, user_id))
+        conn.commit()
+    
+    if is_admin_user:
+        cur.execute("""
+        UPDATE candidates
+        SET lastname = ?, question_index = 0, last_time = ?
+        WHERE user_id = ?
+        """, (lastname, time.time(), user_id))
+    else:
+        cur.execute("""
+        UPDATE candidates
+        SET lastname = ?, question_index = 0, last_time = ?
+        WHERE user_id = ? AND has_completed_interview = 0
+        """, (lastname, time.time(), user_id))
+    
+    if cur.rowcount == 0:
+        await update.message.reply_text("Sorry, an error occurred. Please try /start again.")
+        return
+    conn.commit()
+    
     welcome_message = (
         f"Hello {applicant_name} 👋\n\n"
         "We're happy to see you're interested in becoming part of our team.\n\n"
@@ -298,27 +396,14 @@ async def _handle_name_input(update: Update, text: str, user_id: int, cur, conn)
         "There are no trick questions. Just be yourself and answer naturally."
     )
     await update.message.reply_text(welcome_message)
-    
-    # Send first question (from randomly selected questions)
     await update.message.reply_text(selected_questions[0])
     
-    # Move to question 1 (admins can always update)
-    is_admin_user = is_admin(user_id)
     if is_admin_user:
-        cur.execute("""
-        UPDATE candidates
-        SET question_index = 1, last_time = ?
-        WHERE user_id = ?
-        """, (time.time(), user_id))
+        cur.execute("UPDATE candidates SET question_index = 1, last_time = ? WHERE user_id = ?", (time.time(), user_id))
     else:
-        cur.execute("""
-        UPDATE candidates
-        SET question_index = 1, last_time = ?
-        WHERE user_id = ? AND has_completed_interview = 0
-        """, (time.time(), user_id))
+        cur.execute("UPDATE candidates SET question_index = 1, last_time = ? WHERE user_id = ? AND has_completed_interview = 0", (time.time(), user_id))
     conn.commit()
-    
-    logger.info(f"User {user_id} name stored, welcome sent, question 0 sent, moved to index 1")
+    logger.info(f"User {user_id} lastname stored, welcome sent, question 0 sent, moved to index 1")
 
 
 async def _handle_welcome(update: Update, user_id: int, cur, conn):
@@ -544,7 +629,6 @@ async def _complete_interview(user_id: int, cur, conn, update, context):
     
     # Notify admin (skip if admin is testing themselves)
     if not is_admin_user:
-        # Get ADMIN_IDS at runtime to avoid circular import
         try:
             import bot
             admin_ids = getattr(bot, 'ADMIN_IDS', [])
@@ -553,6 +637,90 @@ async def _complete_interview(user_id: int, cur, conn, update, context):
             logger.error(f"Failed to get ADMIN_IDS for notification: {e}")
     else:
         logger.info(f"Skipping admin notification for admin user {user_id} (they completed their own test)")
+
+    # Rejected: append to Airtable now. Approved: ask payment method then append after they provide details.
+    if not is_admin_user:
+        if decision != "APPROVED":
+            try:
+                _append_chatter_to_airtable(cur, user_id, status="Rejected")
+            except Exception as e:
+                logger.exception("Airtable append (Rejected) failed: %s", e)
+        else:
+            cur.execute("UPDATE candidates SET payment_phase = 1 WHERE user_id = ?", (user_id,))
+            conn.commit()
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("Crypto / BTC", callback_data="pay_btc")],
+                [InlineKeyboardButton("Wise", callback_data="pay_wise")],
+            ])
+            await update.message.reply_text("Choose your payment method:", reply_markup=keyboard)
+
+
+async def payment_callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle payment method choice: BTC or Wise."""
+    query = update.callback_query
+    await query.answer()
+    user_id = query.from_user.id if query.from_user else None
+    if not user_id:
+        return
+    data = query.data
+    cur = get_cursor()
+    conn = get_connection()
+    if data == "pay_btc":
+        cur.execute("UPDATE candidates SET payment_phase = 2, payment_method = 'BTC' WHERE user_id = ?", (user_id,))
+        conn.commit()
+        await query.edit_message_text("Please send your BTC address:")
+    elif data == "pay_wise":
+        cur.execute("UPDATE candidates SET payment_phase = 2, payment_method = 'Wise' WHERE user_id = ?", (user_id,))
+        conn.commit()
+        await query.edit_message_text("Please send your Wise account name (full name on the account):")
+
+
+async def _handle_payment_collect(update: Update, text: str, user_id: int, cur, conn,
+                                  payment_method, wise_name, wise_email, currency):
+    """Collect BTC address or Wise name/email/currency and append to Airtable."""
+    text = (text or "").strip()
+    if not text:
+        await update.message.reply_text("Please send a valid value.")
+        return
+
+    if payment_method == "BTC":
+        cur.execute("UPDATE candidates SET btc_address = ?, payment_phase = 0 WHERE user_id = ?", (text, user_id))
+        conn.commit()
+        try:
+            _append_chatter_to_airtable(cur, user_id, status="Passed", payment_method="BTC", btc_address=text)
+        except Exception as e:
+            logger.exception("Airtable append (Passed/BTC) failed: %s", e)
+            await update.message.reply_text("Your details were saved but we could not add you to our system. We will be in touch.")
+            return
+        await update.message.reply_text("✅ Thank you! Your information has been saved. We will be in touch soon.")
+        return
+
+    if payment_method == "Wise":
+        if wise_name is None or (isinstance(wise_name, str) and wise_name.strip() == ""):
+            cur.execute("UPDATE candidates SET wise_name = ? WHERE user_id = ?", (text, user_id))
+            conn.commit()
+            await update.message.reply_text("Please send your Wise email address:")
+            return
+        if wise_email is None or (isinstance(wise_email, str) and wise_email.strip() == ""):
+            cur.execute("UPDATE candidates SET wise_email = ? WHERE user_id = ?", (text, user_id))
+            conn.commit()
+            await update.message.reply_text("Please send your preferred currency (e.g. USD, EUR):")
+            return
+        # currency
+        cur.execute("UPDATE candidates SET currency = ?, payment_phase = 0 WHERE user_id = ?", (text, user_id))
+        conn.commit()
+        cur.execute("SELECT wise_name, wise_email FROM candidates WHERE user_id = ?", (user_id,))
+        row = cur.fetchone()
+        wname = (row[0] or "") if row else ""
+        wemail = (row[1] or "") if row else ""
+        try:
+            _append_chatter_to_airtable(cur, user_id, status="Passed", payment_method="Wise",
+                                    wise_name=wname, wise_email=wemail, currency=text)
+        except Exception as e:
+            logger.exception("Airtable append (Passed/Wise) failed: %s", e)
+            await update.message.reply_text("Your details were saved but we could not add you to our system. We will be in touch.")
+            return
+        await update.message.reply_text("✅ Thank you! Your information has been saved. We will be in touch soon.")
 
 
 async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE, admin_ids, stop_bot_func, kill_processes_func):
