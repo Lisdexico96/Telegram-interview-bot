@@ -1,0 +1,6 @@
+# Force Python build on Railway (repo has both package.json and requirements.txt)
+# Without this, Nixpacks may pick Node and then python3 won't be available
+providers = ["python"]
+
+[start]
+cmd = "python3 bot.py"
