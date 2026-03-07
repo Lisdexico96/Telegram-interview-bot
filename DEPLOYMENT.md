@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "bot.py"]
+CMD ["python3", "bot.py"]
 ```
 
 ### Build and Run
@@ -43,7 +43,7 @@ docker run -d --env-file .env telegram-interview-bot
 
 ### Heroku
 
-1. Create `Procfile`: `worker: python bot.py`
+1. Create `Procfile`: `worker: python3 bot.py`
 2. Deploy via Heroku CLI or GitHub integration
 3. Set environment variables in Heroku dashboard
 
@@ -52,14 +52,14 @@ docker run -d --env-file .env telegram-interview-bot
 1. Create new Web Service
 2. Connect GitHub repository
 3. Set build command: `pip install -r requirements.txt`
-4. Set start command: `python bot.py`
+4. Set start command: `python3 bot.py`
 5. Add environment variables
 
 ### DigitalOcean App Platform
 
 1. Create new app from GitHub
 2. Select Python buildpack
-3. Set run command: `python bot.py`
+3. Set run command: `python3 bot.py`
 4. Add environment variables
 
 ## Environment Variables

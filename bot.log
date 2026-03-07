@@ -3643,3 +3643,51 @@ telegram.error.Conflict: Conflict: terminated by other getUpdates request; make 
 2026-03-07 13:04:17,950 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
 2026-03-07 13:04:28,156 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
 2026-03-07 13:04:38,358 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:04:48,543 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:04:58,734 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:05:08,943 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:05:19,154 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:05:29,362 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:05:39,550 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:05:49,746 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:05:59,937 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:06:10,284 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:06:20,466 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:06:30,665 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:06:40,869 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:06:51,056 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:07:01,245 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:07:06,873 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:07:06,875 - handlers - INFO - User 6961031211 (@lisdexico26) started the bot
+2026-03-07 13:07:06,882 - handlers - INFO - Admin check for user 6961031211: ADMIN_IDS=[6961031211], is_admin=True
+2026-03-07 13:07:06,882 - handlers - INFO - Admin user 6961031211 starting test interview - bypassing completion lock
+2026-03-07 13:07:06,883 - handlers - INFO - [START] Deleted all old responses for user 6961031211
+2026-03-07 13:07:06,888 - handlers - INFO - [START] Fresh interview started for user 6961031211 (ADMIN TEST MODE)
+2026-03-07 13:07:07,651 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/sendMessage "HTTP/1.1 200 OK"
+2026-03-07 13:07:07,652 - handlers - INFO - Name request sent to user 6961031211
+2026-03-07 13:07:12,403 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:07:12,404 - handlers - INFO - User 6961031211 (@lisdexico26) sent message: Carlos Laurens...
+2026-03-07 13:07:12,404 - handlers - INFO - Admin check for user 6961031211: ADMIN_IDS=[6961031211], is_admin=True
+2026-03-07 13:07:12,404 - handlers - INFO - Admin check for user 6961031211: ADMIN_IDS=[6961031211], is_admin=True
+2026-03-07 13:07:12,404 - handlers - INFO - User 6961031211 provided name: Carlos Laurens
+2026-03-07 13:07:12,404 - handlers - INFO - Selected 5 random questions for user 6961031211
+2026-03-07 13:07:12,741 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/sendMessage "HTTP/1.1 200 OK"
+2026-03-07 13:07:13,062 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/sendMessage "HTTP/1.1 200 OK"
+2026-03-07 13:07:13,063 - handlers - INFO - Admin check for user 6961031211: ADMIN_IDS=[6961031211], is_admin=True
+2026-03-07 13:07:13,069 - handlers - INFO - User 6961031211 name stored, welcome sent, question 0 sent, moved to index 1
+2026-03-07 13:07:22,616 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:07:32,820 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:07:43,027 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:07:53,238 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:08:03,448 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:08:13,660 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:08:23,868 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:08:34,075 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:08:44,280 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:08:54,483 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:09:04,685 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:09:14,892 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:09:25,084 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:09:35,271 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:09:45,477 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"
+2026-03-07 13:09:55,645 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8108233182:AAE_w-nsBfahsaVgGUHquF-GSILzn7tKepM/getUpdates "HTTP/1.1 200 OK"

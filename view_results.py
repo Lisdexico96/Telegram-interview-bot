@@ -216,10 +216,10 @@ def main():
             export_to_text(filename)
         elif sys.argv[1] == "--help" or sys.argv[1] == "-h":
             print("Usage:")
-            print("  python view_results.py              # View all results")
-            print("  python view_results.py --approved   # View only approved")
-            print("  python view_results.py --rejected   # View only rejected")
-            print("  python view_results.py --export [filename]  # Export to text file")
+            print("  python3 view_results.py              # View all results")
+            print("  python3 view_results.py --approved   # View only approved")
+            print("  python3 view_results.py --rejected   # View only rejected")
+            print("  python3 view_results.py --export [filename]  # Export to text file")
         else:
             print(f"Unknown option: {sys.argv[1]}")
             print("Use --help for usage information")

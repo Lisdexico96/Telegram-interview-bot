@@ -6,7 +6,7 @@ The bot now stores all responses and results in the database. Here's how to acce
 
 ### View All Results
 ```bash
-python view_results.py
+python3 view_results.py
 ```
 This shows all completed interviews with:
 - Candidate username and ID
@@ -17,17 +17,17 @@ This shows all completed interviews with:
 
 ### View Only Approved Candidates
 ```bash
-python view_results.py --approved
+python3 view_results.py --approved
 ```
 
 ### View Only Rejected Candidates
 ```bash
-python view_results.py --rejected
+python3 view_results.py --rejected
 ```
 
 ### Export Results to Text File
 ```bash
-python view_results.py --export interview_results.txt
+python3 view_results.py --export interview_results.txt
 ```
 This creates a text file with all results that you can share or archive.
 

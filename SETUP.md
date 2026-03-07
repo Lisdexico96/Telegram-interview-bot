@@ -58,7 +58,7 @@ ADMIN_CHAT_ID=your_actual_chat_id_here
 ### 5. Run the Bot
 
 ```bash
-python bot.py
+python3 bot.py
 ```
 
 You should see:
