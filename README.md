@@ -50,8 +50,9 @@ A sophisticated Telegram bot for conducting automated interviews with candidates
 
 4. **Run the bot**
    ```bash
-   python bot.py
+   python3 bot.py
    ```
+   On Windows you may use `python bot.py` if `python3` is not in PATH.
 
 ## Deployment to Railway (24/7 Hosting)
 
@@ -85,8 +86,9 @@ Deploy your bot to Railway for 24/7 operation without running it locally.
 ### Starting the Bot
 
 ```bash
-python bot.py
+python3 bot.py
 ```
+(Use `python bot.py` on Windows if needed.)
 
 The bot will:
 - Initialize the database
@@ -106,22 +108,22 @@ The bot will:
 
 View all interview results:
 ```bash
-python view_results.py
+python3 view_results.py
 ```
 
 View only approved candidates:
 ```bash
-python view_results.py --approved
+python3 view_results.py --approved
 ```
 
 View only rejected candidates:
 ```bash
-python view_results.py --rejected
+python3 view_results.py --rejected
 ```
 
 Export results to a file:
 ```bash
-python view_results.py --export results.txt
+python3 view_results.py --export results.txt
 ```
 
 ### Admin Commands

@@ -1,8 +1,10 @@
 const OpenAI = require('openai');
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAI() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+  return new OpenAI({ apiKey });
+}
 
 /**
  * Evaluate an applicant's text using GPT-4o-mini.
@@ -33,6 +35,8 @@ Application:
 ${text}
 `;
 
+  const openai = getOpenAI();
+  if (!openai) throw new Error('OPENAI_API_KEY not set');
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [{ role: 'user', content: prompt }],
