@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const evaluateApplicant = require('./evaluateApplicant');
-const { appendApplicant } = require('./sheets');
+const { appendApplicant } = require('./airtable');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
@@ -45,7 +45,7 @@ bot.on('text', async (ctx) => {
   const username = ctx.from.username ? `@${ctx.from.username}` : '';
   const state = userState.get(userId);
 
-  // If user is in "collecting info" flow (after PASS), collect next field or save to Google Sheet
+  // If user is in "collecting info" flow (after PASS), collect next field or save to Airtable
   if (state && state.phase === 'collecting') {
     const step = COLLECT_STEPS.find(s => s.key === state.step);
     if (!step) {
@@ -61,12 +61,12 @@ bot.on('text', async (ctx) => {
       return ctx.reply(next.question);
     }
 
-    // All steps done – save to Google Sheet
+    // All steps done – save to Airtable
     userState.delete(userId);
-    if (!process.env.GOOGLE_SHEET_ID || !process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+    if (!process.env.AIRTABLE_API_KEY || !process.env.AIRTABLE_BASE_ID) {
       return ctx.reply(
         'Thank you! We have received your details.\n\n' +
-        '(Google Sheet is not connected. Add GOOGLE_SHEET_ID and GOOGLE_SERVICE_ACCOUNT_JSON to .env to save applicants.)'
+        '(Airtable is not connected. Add AIRTABLE_API_KEY and AIRTABLE_BASE_ID to .env to save applicants.)'
       );
     }
     try {
@@ -82,7 +82,7 @@ bot.on('text', async (ctx) => {
         '✅ Thank you! Your information has been saved. We will be in touch soon.'
       );
     } catch (err) {
-      console.error('Google Sheet append error:', err);
+      console.error('Airtable append error:', err);
       return ctx.reply(
         'We received your details but could not save them to our system. Please try again later or contact support.'
       );
