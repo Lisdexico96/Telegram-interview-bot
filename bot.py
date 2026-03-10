@@ -10,11 +10,10 @@ import logging
 import subprocess
 import signal
 from dotenv import load_dotenv
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
-from telegram.error import NetworkError, TimedOut, TelegramError, Conflict
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters
+from telegram.error import NetworkError, TimedOut, Conflict
 
-from config import DB_FILE
-from database import init_database, close_database, get_cursor
+from database import init_database, close_database
 
 # Configure logging (log file in bot directory)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

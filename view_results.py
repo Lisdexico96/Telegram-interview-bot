@@ -112,8 +112,8 @@ def view_approved_only():
         print(f"Database error: {e}")
         sys.exit(1)
 
-def view_rejected_only():
-    """View only rejected candidates."""
+def view_not_eligible_only():
+    """View only not eligible candidates."""
     try:
         conn = sqlite3.connect(str(DB_FILE))
         cur = conn.cursor()
@@ -121,17 +121,17 @@ def view_rejected_only():
         cur.execute("""
         SELECT user_id, username, name, score, ai_score, decision, last_time
         FROM candidates
-        WHERE completed = 1 AND decision = 'REJECTED'
+        WHERE completed = 1 AND decision = 'NOT ELIGIBLE'
         ORDER BY score DESC, last_time DESC
         """)
         candidates = cur.fetchall()
         
         if not candidates:
-            print("No rejected candidates found.")
+            print("No not eligible candidates found.")
             return
         
         print("=" * 80)
-        print(f"REJECTED CANDIDATES - {len(candidates)} candidate(s)")
+        print(f"NOT ELIGIBLE CANDIDATES - {len(candidates)} candidate(s)")
         print("=" * 80)
         
         for user_id, username, name, score, ai_score, decision, last_time in candidates:
@@ -144,6 +144,11 @@ def view_rejected_only():
     except sqlite3.Error as e:
         print(f"Database error: {e}")
         sys.exit(1)
+
+
+def view_rejected_only():
+    """Backward-compatible alias for older docs/scripts."""
+    view_not_eligible_only()
 
 def export_to_text(filename="interview_results.txt"):
     """Export all results to a text file."""
@@ -209,17 +214,18 @@ def main():
     if len(sys.argv) > 1:
         if sys.argv[1] == "--approved" or sys.argv[1] == "-a":
             view_approved_only()
-        elif sys.argv[1] == "--rejected" or sys.argv[1] == "-r":
-            view_rejected_only()
+        elif sys.argv[1] in {"--not-eligible", "--rejected", "-r"}:
+            view_not_eligible_only()
         elif sys.argv[1] == "--export" or sys.argv[1] == "-e":
             filename = sys.argv[2] if len(sys.argv) > 2 else "interview_results.txt"
             export_to_text(filename)
         elif sys.argv[1] == "--help" or sys.argv[1] == "-h":
             print("Usage:")
-            print("  python3 view_results.py              # View all results")
-            print("  python3 view_results.py --approved   # View only approved")
-            print("  python3 view_results.py --rejected   # View only rejected")
-            print("  python3 view_results.py --export [filename]  # Export to text file")
+            print("  python view_results.py                      # View all results")
+            print("  python view_results.py --approved           # View only approved")
+            print("  python view_results.py --not-eligible       # View only not eligible")
+            print("  python view_results.py --rejected           # Legacy alias for not eligible")
+            print("  python view_results.py --export [filename]  # Export to text file")
         else:
             print(f"Unknown option: {sys.argv[1]}")
             print("Use --help for usage information")

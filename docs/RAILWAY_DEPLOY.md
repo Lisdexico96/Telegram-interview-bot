@@ -19,7 +19,7 @@ This guide will help you deploy your Telegram Interview Bot to Railway for 24/7 
    ```
 
 2. **Verify these files exist**:
-   - `nixpacks.toml` - Forces Railway to build as Python (needed because the repo also has Node files)
+   - `nixpacks.toml` - Pins Railway to the Python runtime for this bot
    - `Procfile` - Defines the worker process
    - `railway.json` - Railway configuration
    - `requirements.txt` - Python dependencies
@@ -65,7 +65,7 @@ In Railway dashboard:
    ADMIN_CHAT_ID=your_chat_id_here
    AIRTABLE_API_KEY=your_airtable_personal_access_token
    AIRTABLE_BASE_ID=appXXXXXXXX
-   AIRTABLE_TABLE_NAME=Chatters
+   AIRTABLE_TABLE_NAME=your_airtable_table_name
    ```
 
    **Important**: 
@@ -137,8 +137,8 @@ railway up
 ### Build Failures
 
 1. **"python3: command not found" or wrong runtime**:
-   - The repo has both `package.json` (Node) and `requirements.txt` (Python). Railway must build as Python.
-   - Ensure `nixpacks.toml` exists with `providers = ["python"]` so Nixpacks uses Python, not Node.
+   - Ensure `nixpacks.toml` exists with `providers = ["python"]` so Nixpacks uses Python explicitly.
+   - The archived Node prototype under `legacy/node-prototype/` is not part of the live deploy.
 
 2. **Check `requirements.txt`**:
    - Ensure all dependencies are listed

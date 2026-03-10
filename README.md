@@ -5,7 +5,7 @@ A sophisticated Telegram bot for conducting automated interviews with candidates
 ## Features
 
 - 🤖 **Automated Interview Process**: Conducts structured interviews with candidates
-- 🎲 **Randomized Questions**: Each interview randomly selects 5 questions from a pool of 53+ questions
+- 🎲 **Randomized Questions**: Each interview randomly selects 5 questions from a pool of 49 questions
 - 📊 **Intelligent Scoring**: Evaluates responses based on multiple criteria (fan control, emotional investment, monetization, rebuttal skills, pacing)
 - 👤 **Name Collection**: Collects candidate names for easy identification
 - 📝 **Response Tracking**: Stores all questions and responses in a database
@@ -50,9 +50,9 @@ A sophisticated Telegram bot for conducting automated interviews with candidates
 
 4. **Run the bot**
    ```bash
-   python3 bot.py
+   python bot.py
    ```
-   On Windows you may use `python bot.py` if `python3` is not in PATH.
+   If your system uses `python3`, that works too.
 
 ## Deployment to Railway (24/7 Hosting)
 
@@ -67,7 +67,7 @@ Deploy your bot to Railway for 24/7 operation without running it locally.
    - `ADMIN_CHAT_ID` - Your Telegram chat ID
 5. Railway will automatically deploy your bot
 
-**Detailed Guide:** See [RAILWAY_DEPLOY.md](RAILWAY_DEPLOY.md) for complete deployment instructions.
+**Detailed Guide:** See [docs/RAILWAY_DEPLOY.md](docs/RAILWAY_DEPLOY.md) for complete deployment instructions.
 
 ## Getting Your Credentials
 
@@ -86,9 +86,9 @@ Deploy your bot to Railway for 24/7 operation without running it locally.
 ### Starting the Bot
 
 ```bash
-python3 bot.py
+python bot.py
 ```
-(Use `python bot.py` on Windows if needed.)
+(Use `python3 bot.py` if your environment is set up that way.)
 
 The bot will:
 - Initialize the database
@@ -108,22 +108,22 @@ The bot will:
 
 View all interview results:
 ```bash
-python3 view_results.py
+python view_results.py
 ```
 
 View only approved candidates:
 ```bash
-python3 view_results.py --approved
+python view_results.py --approved
 ```
 
-View only rejected candidates:
+View only not eligible candidates:
 ```bash
-python3 view_results.py --rejected
+python view_results.py --not-eligible
 ```
 
 Export results to a file:
 ```bash
-python3 view_results.py --export results.txt
+python view_results.py --export results.txt
 ```
 
 ### Admin Commands
@@ -136,17 +136,19 @@ python3 view_results.py --export results.txt
 
 ```
 telegram-interview-bot/
-├── bot.py              # Main entry point
-├── handlers.py          # Message and command handlers
+├── bot.py              # Main Python bot entry point
+├── handlers.py         # Message and command handlers
 ├── database.py         # Database operations
-├── questions.py         # Question pool and randomization
+├── questions.py        # Question pool and randomization
 ├── scoring.py          # Response scoring logic
 ├── utils.py            # Utility functions (feedback, notifications)
-├── config.py           # Configuration constants
-├── view_results.py     # Script to view interview results
+├── config.py           # Shared configuration constants
+├── view_results.py     # CLI for reviewing interview outcomes
+├── docs/               # Setup, deployment, and operational guides
+├── legacy/             # Archived prototype code kept for reference
 ├── requirements.txt    # Python dependencies
 ├── .env.example        # Environment variables template
-└── README.md           # This file
+└── README.md           # Project overview
 ```
 
 ## Scoring System

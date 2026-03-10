@@ -70,5 +70,8 @@ last_clear_date.txt
 *.temp
 *.bak
 
+# Node.js leftovers
+node_modules/
+
 # Railway
 .railway/

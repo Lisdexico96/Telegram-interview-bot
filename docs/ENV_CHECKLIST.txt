@@ -1,0 +1,18 @@
+================================================================================
+ENV CHECKLIST – What you need for chatters to reach your Airtable table
+================================================================================
+
+For the PYTHON BOT (`python bot.py`) to save chatters into Airtable, your .env must have:
+
+  [x] BOT_TOKEN=...              (from @BotFather)
+  [x] ADMIN_CHAT_ID=...          (your Telegram chat ID, e.g. from @userinfobot)
+  [x] AIRTABLE_API_KEY=...       (Personal Access Token from airtable.com/create/tokens)
+  [x] AIRTABLE_BASE_ID=...       (base ID from the Airtable URL, e.g. appXXXXXXXX)
+  [x] AIRTABLE_TABLE_NAME=...     (table tab name, e.g. Chatters; default is "Chatters")
+
+Airtable field names the bot uses (must match exactly in your base):
+  Name | Lastname | Replies | Status | Payment method | BTC address | wise name | Wise email | currency
+
+If AIRTABLE_API_KEY or AIRTABLE_BASE_ID is missing, the bot still runs but will log an error when it tries to add a record. See AIRTABLE_SETUP.txt for full setup.
+
+================================================================================
