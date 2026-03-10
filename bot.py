@@ -14,7 +14,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Cal
 from telegram.error import NetworkError, TimedOut, TelegramError, Conflict
 
 from config import DB_FILE
-from database import init_database, clear_database, close_database, get_cursor
+from database import init_database, close_database, get_cursor
 
 # Configure logging (log file in bot directory)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -44,7 +44,14 @@ if not ADMIN_CHAT_ID:
 ADMIN_IDS = [int(x) for x in ADMIN_CHAT_ID.split(",")]
 
 # Import handlers AFTER ADMIN_IDS is defined to avoid import issues
-from handlers import start_handler, handle_message, payment_callback_handler, stop_command, error_handler
+from handlers import (
+    error_handler,
+    handle_message,
+    payment_callback_handler,
+    purge_command,
+    start_handler,
+    stop_command,
+)
 
 # Global application instance for graceful shutdown
 app_instance = None
@@ -150,7 +157,6 @@ def main() -> None:
         
         # Initialize database
         init_database()
-        clear_database()  # Clear once per day
         
         # Build application
         # Note: Timeouts are handled by the underlying httpx library
@@ -161,6 +167,8 @@ def main() -> None:
         app_instance.add_handler(CommandHandler("start", start_handler))
         app_instance.add_handler(CommandHandler("stop", 
             lambda u, c: stop_command(u, c, ADMIN_IDS, stop_bot, kill_all_bot_processes)))
+        app_instance.add_handler(CommandHandler("purge",
+            lambda u, c: purge_command(u, c, ADMIN_IDS)))
         app_instance.add_handler(CallbackQueryHandler(payment_callback_handler))
         app_instance.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         app_instance.add_error_handler(error_handler)

@@ -310,19 +310,20 @@ def _detect_ai_indicators(text: str, lower: str, word_count: int, response_time:
 def determine_decision(score: int, ai_score: int) -> str:
     """
     Determine final decision based on scores.
-    Difficulty reduced by 30% - more lenient thresholds for approval.
+    Difficulty increased by roughly 15% from the current lenient calibration.
     
     Max score is 50 (10 points per question x 5 questions)
     
     Returns:
         str: "APPROVED", "BORDERLINE", or "NOT ELIGIBLE"
     """
-    # Lowered thresholds for easier approval (reduced difficulty by 30%):
-    # APPROVED: 17+ (34%) with reasonable AI score (was 24+/48%)
-    # BORDERLINE: 13+ (26%) with higher AI tolerance (was 18+/36%)
-    if score >= 17 and ai_score <= 8:
+    # Tightened thresholds to make approval meaningfully harder without
+    # reworking the scoring rubric itself.
+    # APPROVED: 20+ (40%) with stricter AI tolerance
+    # BORDERLINE: 15+ (30%) with slightly stricter AI tolerance
+    if score >= 20 and ai_score <= 7:
         return "APPROVED"
-    elif score >= 13 and ai_score <= 10:
+    elif score >= 15 and ai_score <= 9:
         return "BORDERLINE"
     else:
         return "NOT ELIGIBLE"

@@ -129,6 +129,7 @@ python3 view_results.py --export results.txt
 ### Admin Commands
 
 - `/start` - Start/restart interview (admins can retake unlimited times)
+- `/purge` - Open a confirmation button to permanently clear the bot database
 - `/stop` - Stop the bot (admin only)
 
 ## Project Structure
@@ -161,8 +162,8 @@ The bot evaluates responses on a 0-10 scale per question across 5 categories:
 **Total possible score**: 50 points (5 questions × 10 points)
 
 **Decision thresholds**:
-- **APPROVED**: Score ≥ 24 (48%) with AI score ≤ 6
-- **BORDERLINE**: Score ≥ 18 (36%) with AI score ≤ 8
+- **APPROVED**: Score ≥ 20 (40%) with AI score ≤ 7
+- **BORDERLINE**: Score ≥ 15 (30%) with AI score ≤ 9
 - **NOT ELIGIBLE**: Below thresholds
 
 ## Database

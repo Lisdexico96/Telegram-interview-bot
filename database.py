@@ -3,9 +3,7 @@ Database operations and setup
 """
 
 import sqlite3
-import os
 import logging
-from datetime import datetime
 from config import DB_FILE
 
 logger = logging.getLogger(__name__)
@@ -106,31 +104,15 @@ def init_database():
 
 
 def clear_database():
-    """Clear all data from the database only once today."""
+    """Permanently clear all candidate and response data."""
     try:
-        today = datetime.now().strftime("%Y-%m-%d")
-        flag_file = "last_clear_date.txt"
-        
-        # Check if we've already cleared today
-        if os.path.exists(flag_file):
-            with open(flag_file, 'r') as f:
-                last_clear_date = f.read().strip()
-            if last_clear_date == today:
-                logger.info(f"Database already cleared today ({today}). Skipping clear.")
-                return
-        
-        # Clear the database
-        logger.info(f"Clearing database for today ({today})...")
+        logger.warning("Purging all interview data from the database...")
         cur.execute("DELETE FROM responses")
         cur.execute("DELETE FROM candidates")
         cur.execute("DELETE FROM sqlite_sequence")
         conn.commit()
-        
-        # Save today's date to flag file
-        with open(flag_file, 'w') as f:
-            f.write(today)
-        
-        logger.info("Database cleared successfully (only for today)")
+
+        logger.info("Database purged successfully")
     except Exception as e:
         logger.error(f"Error clearing database: {e}", exc_info=True)
 

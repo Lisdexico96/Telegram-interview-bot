@@ -6,6 +6,7 @@ The bot saves every candidate to your Airtable table with:
   Name | Lastname | Replies | Status | Payment method | BTC address | wise name | Wise email | currency
 
 - Status is "Passed" or "Rejected".
+- Replies are only included for candidates who pass.
 - If Passed, the bot asks for payment method (Crypto/BTC or Wise). BTC → "BTC address"; Wise → "wise name", "Wise email", "currency".
 
 ================================================================================

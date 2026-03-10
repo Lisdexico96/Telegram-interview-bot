@@ -8,12 +8,15 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from database import get_cursor, get_connection
+from database import clear_database, get_cursor, get_connection
 from questions import get_random_questions, QUESTIONS_PER_INTERVIEW
 from scoring import analyze_response, determine_decision
 from utils import generate_feedback, notify_admin
 
 logger = logging.getLogger(__name__)
+
+PURGE_CONFIRM_CALLBACK = "admin_purge_confirm"
+PURGE_CANCEL_CALLBACK = "admin_purge_cancel"
 
 
 def _build_replies_text(cur, user_id: int) -> str:
@@ -30,13 +33,14 @@ def _build_replies_text(cur, user_id: int) -> str:
 
 
 def _append_chatter_to_airtable(cur, user_id: int, status: str, payment_method: str = "", btc_address: str = "",
-                                wise_name: str = "", wise_email: str = "", currency: str = "") -> None:
+                                wise_name: str = "", wise_email: str = "", currency: str = "",
+                                include_replies: bool = False) -> None:
     """Append one record to Airtable. Requires airtable module and env vars."""
     cur.execute("SELECT name, lastname FROM candidates WHERE user_id = ?", (user_id,))
     row = cur.fetchone()
     name = (row[0] or "") if row else ""
     lastname = (row[1] or "") if row else ""
-    replies = _build_replies_text(cur, user_id)
+    replies = _build_replies_text(cur, user_id) if include_replies else ""
     try:
         from airtable import append_chatter
         append_chatter({
@@ -642,7 +646,7 @@ async def _complete_interview(user_id: int, cur, conn, update, context):
     if not is_admin_user:
         if decision != "APPROVED":
             try:
-                _append_chatter_to_airtable(cur, user_id, status="Rejected")
+                _append_chatter_to_airtable(cur, user_id, status="Rejected", include_replies=False)
             except Exception as e:
                 logger.exception("Airtable append (Rejected) failed: %s", e)
         else:
@@ -656,7 +660,7 @@ async def _complete_interview(user_id: int, cur, conn, update, context):
 
 
 async def payment_callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle payment method choice: BTC or Wise."""
+    """Handle inline button callbacks for payment collection and admin actions."""
     query = update.callback_query
     await query.answer()
     user_id = query.from_user.id if query.from_user else None
@@ -665,6 +669,30 @@ async def payment_callback_handler(update: Update, context: ContextTypes.DEFAULT
     data = query.data
     cur = get_cursor()
     conn = get_connection()
+
+    if data == PURGE_CONFIRM_CALLBACK:
+        if not is_admin(user_id):
+            await query.edit_message_text("You do not have permission to purge the database.")
+            logger.warning(f"User {user_id} attempted to confirm purge without permission")
+            return
+        try:
+            clear_database()
+            logger.warning(f"Admin {user_id} purged the database")
+            await query.edit_message_text("Database purged successfully.")
+        except Exception:
+            logger.exception("Admin purge failed")
+            await query.edit_message_text("Database purge failed. Check the logs.")
+        return
+
+    if data == PURGE_CANCEL_CALLBACK:
+        if not is_admin(user_id):
+            await query.edit_message_text("You do not have permission to manage purge actions.")
+            logger.warning(f"User {user_id} attempted to cancel purge without permission")
+            return
+        logger.info(f"Admin {user_id} cancelled database purge")
+        await query.edit_message_text("Database purge cancelled.")
+        return
+
     if data == "pay_btc":
         cur.execute("UPDATE candidates SET payment_phase = 2, payment_method = 'BTC' WHERE user_id = ?", (user_id,))
         conn.commit()
@@ -673,6 +701,33 @@ async def payment_callback_handler(update: Update, context: ContextTypes.DEFAULT
         cur.execute("UPDATE candidates SET payment_phase = 2, payment_method = 'Wise' WHERE user_id = ?", (user_id,))
         conn.commit()
         await query.edit_message_text("Please send your Wise account name (full name on the account):")
+
+
+async def purge_command(update: Update, context: ContextTypes.DEFAULT_TYPE, admin_ids):
+    """Show an admin-only confirmation button before purging the database."""
+    try:
+        user = update.effective_user
+        user_id = user.id if user else None
+
+        if user_id not in admin_ids:
+            await update.message.reply_text("❌ You don't have permission to use this command.")
+            logger.warning(f"User {user_id} attempted to use /purge without permission")
+            return
+
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("Confirm purge", callback_data=PURGE_CONFIRM_CALLBACK)],
+            [InlineKeyboardButton("Cancel", callback_data=PURGE_CANCEL_CALLBACK)],
+        ])
+        await update.message.reply_text(
+            "This will permanently delete all candidates and responses from the bot database.\n\n"
+            "Press Confirm purge only if you are sure.",
+            reply_markup=keyboard,
+        )
+        logger.info(f"Admin {user_id} opened purge confirmation")
+    except Exception as e:
+        logger.error(f"Error in purge_command: {e}", exc_info=True)
+        if update and update.message:
+            await update.message.reply_text("❌ Error opening purge confirmation. Check logs.")
 
 
 async def _handle_payment_collect(update: Update, text: str, user_id: int, cur, conn,
@@ -687,7 +742,14 @@ async def _handle_payment_collect(update: Update, text: str, user_id: int, cur, 
         cur.execute("UPDATE candidates SET btc_address = ?, payment_phase = 0 WHERE user_id = ?", (text, user_id))
         conn.commit()
         try:
-            _append_chatter_to_airtable(cur, user_id, status="Passed", payment_method="BTC", btc_address=text)
+            _append_chatter_to_airtable(
+                cur,
+                user_id,
+                status="Passed",
+                payment_method="BTC",
+                btc_address=text,
+                include_replies=True,
+            )
         except Exception as e:
             logger.exception("Airtable append (Passed/BTC) failed: %s", e)
             await update.message.reply_text("Your details were saved but we could not add you to our system. We will be in touch.")
@@ -714,8 +776,16 @@ async def _handle_payment_collect(update: Update, text: str, user_id: int, cur, 
         wname = (row[0] or "") if row else ""
         wemail = (row[1] or "") if row else ""
         try:
-            _append_chatter_to_airtable(cur, user_id, status="Passed", payment_method="Wise",
-                                    wise_name=wname, wise_email=wemail, currency=text)
+            _append_chatter_to_airtable(
+                cur,
+                user_id,
+                status="Passed",
+                payment_method="Wise",
+                wise_name=wname,
+                wise_email=wemail,
+                currency=text,
+                include_replies=True,
+            )
         except Exception as e:
             logger.exception("Airtable append (Passed/Wise) failed: %s", e)
             await update.message.reply_text("Your details were saved but we could not add you to our system. We will be in touch.")
