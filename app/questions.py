@@ -1,6 +1,6 @@
 """
 Interview questions bank - Random pool of 49 questions
-Each interview randomly selects 5 questions from this pool.
+Each interview randomly selects 10 questions from this pool.
 """
 
 import random
@@ -76,7 +76,7 @@ QUESTION_POOL = [
 ]
 
 # Number of questions to ask per interview
-QUESTIONS_PER_INTERVIEW = 5
+QUESTIONS_PER_INTERVIEW = 10
 
 
 def get_random_questions() -> list[str]:
@@ -84,7 +84,7 @@ def get_random_questions() -> list[str]:
     Randomly select QUESTIONS_PER_INTERVIEW unique questions from the pool.
     
     Returns:
-        List of 5 randomly selected questions
+        List of 10 randomly selected questions
     """
     if len(QUESTION_POOL) < QUESTIONS_PER_INTERVIEW:
         # If pool is smaller than needed, just return all questions

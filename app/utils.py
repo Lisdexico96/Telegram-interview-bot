@@ -3,7 +3,7 @@ Utility functions for feedback generation and admin notifications
 """
 
 import logging
-from questions import QUESTIONS_PER_INTERVIEW
+from app.questions import QUESTIONS_PER_INTERVIEW
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +34,12 @@ def generate_feedback(score: int, ai_score: int, decision: str) -> str:
         )
     else:
         return (
-            "Thank you for taking the time to complete our interview process.\n\n"
-            "After careful consideration, we've decided to move forward with other candidates at this time. "
-            "This doesn't reflect on you personally, but rather on finding the right fit for our specific needs.\n\n"
-            "We appreciate your interest and wish you the best in your search."
+            "Thank you for completing the interview!\n\n"
+            "Your answers have been automatically reviewed and based on that initial screening, "
+            "the fit doesn't seem quite right at this time.\n\n"
+            "That said, we personally review every application — so if anything changes or we see "
+            "a good opportunity for you, we'll reach out to you directly on Telegram.\n\n"
+            "We appreciate you taking the time and wish you the best."
         )
 
 

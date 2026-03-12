@@ -43,7 +43,7 @@ if not ADMIN_CHAT_ID:
 ADMIN_IDS = [int(x) for x in ADMIN_CHAT_ID.split(",")]
 
 # Import handlers AFTER ADMIN_IDS is defined to avoid import issues
-from handlers import (
+from app.handlers import (
     error_handler,
     handle_message,
     payment_callback_handler,
