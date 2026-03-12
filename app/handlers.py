@@ -168,7 +168,7 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         welcome_message = (
             "Hello! 👋\n\n"
             "We're happy to see you're interested in becoming part of our team.\n\n"
-            "We'll now proceed with the interview phase. This consists of a few short questions designed to understand "
+            f"We'll now proceed with the interview phase. This consists of {len(selected_questions)} short questions designed to understand "
             "how you communicate, handle different fan situations, and whether your style aligns with what we're looking for.\n\n"
             "There are no trick questions. Just be yourself and answer naturally."
         )
@@ -176,7 +176,7 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             welcome_message = "🛠️ Admin Test Mode\n\n" + welcome_message
 
         await update.message.reply_text(welcome_message)
-        await update.message.reply_text(selected_questions[0])
+        await update.message.reply_text(f"(1/{len(selected_questions)}) {selected_questions[0]}")
         logger.info(f"Welcome and first question sent to user {user.id}")
     except Exception as e:
         logger.error(f"Error in start handler: {e}", exc_info=True)
@@ -313,7 +313,7 @@ async def _handle_answer(update: Update, text: str, index: int, user_id: int,
     logger.info(f"User {user_id}, Question {previous_question_num}: Added score={score}, ai_score={ai_score}")
 
     if index < len(user_questions):
-        await update.message.reply_text(user_questions[index])
+        await update.message.reply_text(f"({index + 1}/{len(user_questions)}) {user_questions[index]}")
         logger.info(f"Sent question {index} to user {user_id}")
     else:
         await _complete_interview(user_id, cur, conn, update, context)
