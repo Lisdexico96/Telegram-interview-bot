@@ -392,21 +392,21 @@ async def _complete_interview(user_id: int, cur, conn, update, context):
         except (ImportError, AttributeError) as e:
             logger.error(f"Failed to get ADMIN_IDS for notification: {e}")
 
-        # Push results to ClickUp
-        cur.execute("SELECT username FROM candidates WHERE user_id = ?", (user_id,))
-        row = cur.fetchone()
-        username = (row[0] or "") if row else ""
-        if username:
-            try:
-                from integrations.clickup import push_interview_results
-                replies = _build_replies_text(cur, user_id)
-                push_interview_results(username, decision, final_score, replies)
-            except LookupError as e:
-                logger.warning(f"ClickUp task not found for @{username}: {e}")
-            except Exception as e:
-                logger.exception(f"Failed to push results to ClickUp for @{username}: {e}")
-        else:
-            logger.warning(f"No username for user {user_id}, skipping ClickUp push")
+    # Push results to ClickUp (all users including admins)
+    cur.execute("SELECT username FROM candidates WHERE user_id = ?", (user_id,))
+    row = cur.fetchone()
+    username = (row[0] or "") if row else ""
+    if username:
+        try:
+            from integrations.clickup import push_interview_results
+            replies = _build_replies_text(cur, user_id)
+            push_interview_results(username, decision, final_score, replies)
+        except LookupError as e:
+            logger.warning(f"ClickUp task not found for @{username}: {e}")
+        except Exception as e:
+            logger.exception(f"Failed to push results to ClickUp for @{username}: {e}")
+    else:
+        logger.warning(f"No username for user {user_id}, skipping ClickUp push")
 
 
 async def purge_command(update: Update, context: ContextTypes.DEFAULT_TYPE, admin_ids):
