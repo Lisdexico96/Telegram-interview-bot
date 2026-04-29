@@ -505,7 +505,8 @@ async def _complete_interview(user_id: int, cur, conn, update, context):
         cur.execute("SELECT name FROM candidates WHERE user_id = ?", (user_id,))
         name_row = cur.fetchone()
         candidate_name = name_row[0] if name_row and name_row[0] else "(unknown)"
-        alert = (
+        replies_text = _build_replies_text(cur, user_id) or "(no responses recorded)"
+        header = (
             "⚠️ ClickUp push FAILED — manual update needed\n\n"
             f"Candidate: {candidate_name}\n"
             f"Telegram: @{username or 'none'}\n"
@@ -513,13 +514,29 @@ async def _complete_interview(user_id: int, cur, conn, update, context):
             f"Decision: {decision}\n"
             f"Score: {final_score}\n\n"
             f"Reason: {clickup_error}\n\n"
-            "Update the matching ClickUp task by hand, or fix the 'Telegram @' field on the task and have the candidate retake."
+            "Update the matching ClickUp task by hand, or fix the 'Telegram @' field on the task and have the candidate retake.\n\n"
+            "📝 Candidate responses:\n"
         )
+
+        TELEGRAM_LIMIT = 4000
+        first_chunk = header + replies_text
+        chunks = []
+        if len(first_chunk) <= TELEGRAM_LIMIT:
+            chunks.append(first_chunk)
+        else:
+            chunks.append(header)
+            remaining = replies_text
+            while remaining:
+                chunks.append(remaining[:TELEGRAM_LIMIT])
+                remaining = remaining[TELEGRAM_LIMIT:]
+
         for admin in admin_ids:
-            try:
-                await context.bot.send_message(chat_id=admin, text=alert)
-            except Exception as e:
-                logger.error(f"Failed to send ClickUp failure alert to admin {admin}: {e}")
+            for chunk in chunks:
+                try:
+                    await context.bot.send_message(chat_id=admin, text=chunk)
+                except Exception as e:
+                    logger.error(f"Failed to send ClickUp failure alert to admin {admin}: {e}")
+                    break
 
 
 async def purge_command(update: Update, context: ContextTypes.DEFAULT_TYPE, admin_ids):
