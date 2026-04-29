@@ -74,7 +74,25 @@ def _find_task(api_key: str, list_id: str, telegram_handle: str, telegram_field_
 
 
 def _update_field(api_key: str, task_id: str, field_id: str, value) -> None:
-    _request(f"{CLICKUP_API_URL}/task/{task_id}/field/{field_id}", api_key, method="POST", data={"value": value})
+    url = f"{CLICKUP_API_URL}/task/{task_id}/field/{field_id}"
+    body = json.dumps({"value": value}).encode()
+    req = urllib.request.Request(
+        url,
+        data=body,
+        method="POST",
+        headers={"Authorization": api_key, "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            response_body = resp.read().decode()
+            logger.info(
+                f"ClickUp field {field_id} update HTTP {resp.status}: {response_body[:300]}"
+            )
+            if response_body and '"err"' in response_body:
+                raise RuntimeError(f"ClickUp returned error body: {response_body}")
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode() if e.fp else ""
+        raise RuntimeError(f"ClickUp API error {e.code} on field {field_id}: {err_body}") from e
 
 
 def push_interview_results(telegram_username: str, decision: str, score: int, responses: str) -> None:
@@ -104,8 +122,32 @@ def push_interview_results(telegram_username: str, decision: str, score: int, re
     if not decision_option_id:
         raise ValueError(f"Decision option '{decision}' not found in ClickUp field. Available: {list(decision_options.keys())}")
 
-    _update_field(api_key, task_id, fields[FIELD_DECISION]["id"], decision_option_id)
-    _update_field(api_key, task_id, fields[FIELD_SCORE]["id"], score)
-    _update_field(api_key, task_id, fields[FIELD_RESPONSES]["id"], responses)
+    responses_preview = (responses or "")[:120].replace("\n", "\\n")
+    logger.info(
+        f"ClickUp push for @{telegram_username}: task={task_id} "
+        f"decision={decision} score={score} "
+        f"responses_len={len(responses or '')} preview={responses_preview!r}"
+    )
+
+    updates = [
+        ("decision",  fields[FIELD_DECISION]["id"],  decision_option_id),
+        ("score",     fields[FIELD_SCORE]["id"],     score),
+        ("responses", fields[FIELD_RESPONSES]["id"], responses),
+    ]
+    failures = []
+    for label, field_id, value in updates:
+        try:
+            _update_field(api_key, task_id, field_id, value)
+            logger.info(f"ClickUp {label} updated for @{telegram_username}")
+        except Exception:
+            logger.exception(
+                f"ClickUp {label} update FAILED for @{telegram_username} (task {task_id})"
+            )
+            failures.append(label)
+
+    if failures:
+        raise RuntimeError(
+            f"ClickUp push partially failed for @{telegram_username}: {failures}"
+        )
 
     logger.info(f"ClickUp task {task_id} updated for @{telegram_username}: {decision}, score={score}")

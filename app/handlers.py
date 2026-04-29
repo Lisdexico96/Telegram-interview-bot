@@ -73,6 +73,18 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info(f"User {user.id} (@{user.username}) started the bot")
 
         is_admin_user = is_admin(user.id)
+
+        if not user.username and not is_admin_user:
+            await update.message.reply_text(
+                "⚠️ You don't have a Telegram username set on your account.\n\n"
+                "Without one we can't match your interview to your application.\n\n"
+                "Please:\n"
+                "1. Open Telegram → Settings → Username\n"
+                "2. Set a public @username\n"
+                "3. Send /start again to begin the interview."
+            )
+            logger.warning(f"User {user.id} has no Telegram username — aborted /start")
+            return
         if is_admin_user:
             logger.info(f"Admin user {user.id} starting test interview - bypassing completion lock")
 
@@ -176,6 +188,12 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             welcome_message = "🛠️ Admin Test Mode\n\n" + welcome_message
 
         await update.message.reply_text(welcome_message)
+        if user.username:
+            await update.message.reply_text(
+                f"📌 We've recorded your Telegram handle as @{user.username}.\n\n"
+                "If this does not match the handle you submitted on your application form, "
+                "please contact the admin before continuing — your results may not save correctly."
+            )
         await update.message.reply_text(f"(1/{len(selected_questions)}) {selected_questions[0]}")
         logger.info(f"Welcome and first question sent to user {user.id}")
     except Exception as e:
@@ -383,19 +401,24 @@ async def _complete_interview(user_id: int, cur, conn, update, context):
         await update.message.reply_text(feedback)
         logger.info(f"Interview completed for user {user_id} - Decision: {decision}")
 
+    try:
+        import bot
+        admin_ids = getattr(bot, 'ADMIN_IDS', [])
+    except (ImportError, AttributeError) as e:
+        logger.error(f"Failed to get ADMIN_IDS: {e}")
+        admin_ids = []
+
     if not is_admin_user:
-        # Notify admin
         try:
-            import bot
-            admin_ids = getattr(bot, 'ADMIN_IDS', [])
             await notify_admin(user_id, context, cur, admin_ids)
-        except (ImportError, AttributeError) as e:
-            logger.error(f"Failed to get ADMIN_IDS for notification: {e}")
+        except Exception as e:
+            logger.error(f"notify_admin failed: {e}")
 
     # Push results to ClickUp (all users including admins)
     cur.execute("SELECT username FROM candidates WHERE user_id = ?", (user_id,))
     row = cur.fetchone()
     username = (row[0] or "") if row else ""
+    clickup_error = None
     if username:
         try:
             from integrations.clickup import push_interview_results
@@ -403,10 +426,33 @@ async def _complete_interview(user_id: int, cur, conn, update, context):
             push_interview_results(username, decision, final_score, replies)
         except LookupError as e:
             logger.warning(f"ClickUp task not found for @{username}: {e}")
+            clickup_error = f"No matching ClickUp task — handle on application doesn't match @{username}"
         except Exception as e:
             logger.exception(f"Failed to push results to ClickUp for @{username}: {e}")
+            clickup_error = f"{type(e).__name__}: {e}"
     else:
         logger.warning(f"No username for user {user_id}, skipping ClickUp push")
+        clickup_error = "Candidate has no Telegram @username set on their account"
+
+    if clickup_error and not is_admin_user:
+        cur.execute("SELECT name FROM candidates WHERE user_id = ?", (user_id,))
+        name_row = cur.fetchone()
+        candidate_name = name_row[0] if name_row and name_row[0] else "(unknown)"
+        alert = (
+            "⚠️ ClickUp push FAILED — manual update needed\n\n"
+            f"Candidate: {candidate_name}\n"
+            f"Telegram: @{username or 'none'}\n"
+            f"User ID: {user_id}\n"
+            f"Decision: {decision}\n"
+            f"Score: {final_score}\n\n"
+            f"Reason: {clickup_error}\n\n"
+            "Update the matching ClickUp task by hand, or fix the 'Telegram @' field on the task and have the candidate retake."
+        )
+        for admin in admin_ids:
+            try:
+                await context.bot.send_message(chat_id=admin, text=alert)
+            except Exception as e:
+                logger.error(f"Failed to send ClickUp failure alert to admin {admin}: {e}")
 
 
 async def purge_command(update: Update, context: ContextTypes.DEFAULT_TYPE, admin_ids):
