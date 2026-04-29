@@ -18,6 +18,72 @@ logger = logging.getLogger(__name__)
 PURGE_CONFIRM_CALLBACK = "admin_purge_confirm"
 PURGE_CANCEL_CALLBACK = "admin_purge_cancel"
 
+ABANDONMENT_THRESHOLD_SECONDS = 30 * 60
+
+
+async def check_abandoned_interviews(context: ContextTypes.DEFAULT_TYPE):
+    """Periodic JobQueue callback: alert admin about candidates who started
+    an interview, went silent for ABANDONMENT_THRESHOLD_SECONDS, and never
+    finished. Each candidate is alerted once."""
+    try:
+        import bot as bot_module
+        admin_ids = getattr(bot_module, 'ADMIN_IDS', [])
+        if not admin_ids:
+            return
+
+        cur = get_cursor()
+        conn = get_connection()
+        cutoff = time.time() - ABANDONMENT_THRESHOLD_SECONDS
+
+        cur.execute(
+            """
+            SELECT user_id, username, name, question_index, last_time, selected_questions
+            FROM candidates
+            WHERE has_completed_interview = 0
+              AND question_index >= 1
+              AND last_time IS NOT NULL
+              AND last_time < ?
+              AND COALESCE(abandoned_alerted, 0) = 0
+            """,
+            (cutoff,),
+        )
+        rows = cur.fetchall()
+        if not rows:
+            return
+
+        for user_id, username, name, qindex, last_time, sel_q in rows:
+            try:
+                total = len(json.loads(sel_q)) if sel_q else QUESTIONS_PER_INTERVIEW
+            except (json.JSONDecodeError, TypeError):
+                total = QUESTIONS_PER_INTERVIEW
+            answered = max(0, qindex - 1)
+            mins_idle = int((time.time() - last_time) / 60)
+            display = name if name else (f"@{username}" if username else f"User {user_id}")
+
+            alert = (
+                "⏸️ Interview abandoned\n\n"
+                f"Candidate: {display}\n"
+                f"Telegram: @{username or 'none'}\n"
+                f"User ID: {user_id}\n"
+                f"Progress: {answered}/{total} questions answered\n"
+                f"Idle for: {mins_idle} minutes\n\n"
+                "ClickUp will not be updated unless they complete the interview."
+            )
+            for admin in admin_ids:
+                try:
+                    await context.bot.send_message(chat_id=admin, text=alert)
+                except Exception as e:
+                    logger.error(f"Failed to send abandonment alert to admin {admin}: {e}")
+
+            cur.execute(
+                "UPDATE candidates SET abandoned_alerted = 1 WHERE user_id = ?",
+                (user_id,),
+            )
+        conn.commit()
+        logger.info(f"Abandonment alerts sent for {len(rows)} candidate(s)")
+    except Exception as e:
+        logger.exception(f"check_abandoned_interviews crashed: {e}")
+
 
 def _build_replies_text(cur, user_id: int) -> str:
     """Build 'Q: ... A: ...' text from responses table for this user."""
@@ -163,7 +229,8 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         UPDATE candidates
         SET username = ?, question_index = 1, last_time = ?, completed = 0,
             score = 0, ai_score = 0, decision = NULL, feedback = NULL,
-            has_completed_interview = 0, selected_questions = ?
+            has_completed_interview = 0, selected_questions = ?,
+            abandoned_alerted = 0
         WHERE user_id = ?
         """, (user.username, time.time(), questions_json, user.id))
 
@@ -434,7 +501,7 @@ async def _complete_interview(user_id: int, cur, conn, update, context):
         logger.warning(f"No username for user {user_id}, skipping ClickUp push")
         clickup_error = "Candidate has no Telegram @username set on their account"
 
-    if clickup_error and not is_admin_user:
+    if clickup_error:
         cur.execute("SELECT name FROM candidates WHERE user_id = ?", (user_id,))
         name_row = cur.fetchone()
         candidate_name = name_row[0] if name_row and name_row[0] else "(unknown)"

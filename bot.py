@@ -44,6 +44,7 @@ ADMIN_IDS = [int(x) for x in ADMIN_CHAT_ID.split(",")]
 
 # Import handlers AFTER ADMIN_IDS is defined to avoid import issues
 from app.handlers import (
+    check_abandoned_interviews,
     error_handler,
     handle_message,
     payment_callback_handler,
@@ -171,6 +172,17 @@ def main() -> None:
         app_instance.add_handler(CallbackQueryHandler(payment_callback_handler))
         app_instance.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         app_instance.add_error_handler(error_handler)
+
+        if app_instance.job_queue is not None:
+            app_instance.job_queue.run_repeating(
+                check_abandoned_interviews,
+                interval=600,
+                first=120,
+                name="abandonment_watchdog",
+            )
+            logger.info("Abandonment watchdog scheduled (every 10 min, threshold 30 min)")
+        else:
+            logger.warning("JobQueue not available — abandonment alerts disabled")
         
         logger.info("Bot is starting...")
         logger.info(f"Bot token: {BOT_TOKEN[:10]}...")  # Log first 10 chars for verification
